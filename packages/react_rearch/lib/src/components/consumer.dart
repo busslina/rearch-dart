@@ -26,7 +26,7 @@ abstract class RearchComponent extends Component2
     _dependencyDisposers.clear();
   }
 
-  // @override
+  @override
   void componentDidUpdate(
     Map<dynamic, dynamic> prevProps,
     Map<dynamic, dynamic> prevState, [
