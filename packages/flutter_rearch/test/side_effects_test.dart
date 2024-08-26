@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rearch/flutter_rearch.dart';
@@ -96,6 +98,82 @@ void main() {
     container.read(rebuildableCapsule).value = 1;
     await tester.pump();
     expect(find.text('2'), findsOneWidget);
+  });
+
+  testWidgets("future won't rebuild after build", (tester) async {
+    final outerCompleter = Completer<void>();
+    final innerCompleter = Completer<void>();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RearchBootstrapper(
+          child: Scaffold(
+            body: RearchBuilder(
+              builder: (context, use) {
+                final val = use.future(outerCompleter.future);
+                if (val is AsyncLoading) {
+                  return RearchBuilder(
+                    builder: (context, use) {
+                      use.future(innerCompleter.future);
+                      return const CircularProgressIndicator();
+                    },
+                  );
+                } else {
+                  return const Text('switched');
+                }
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(find.text('switched'), findsNothing);
+
+    outerCompleter.complete(null);
+    await tester.pump();
+    expect(find.text('switched'), findsOneWidget);
+
+    innerCompleter.complete(null);
+    await tester.pump();
+    expect(find.text('switched'), findsOneWidget);
+  });
+
+  testWidgets("stream won't rebuild after build", (tester) async {
+    final outerCompleter = Completer<void>();
+    final innerCompleter = Completer<void>();
+    final outerStream = outerCompleter.future.asStream();
+    final innerStream = innerCompleter.future.asStream();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RearchBootstrapper(
+          child: Scaffold(
+            body: RearchBuilder(
+              builder: (context, use) {
+                final val = use.stream(outerStream);
+                if (val is AsyncLoading) {
+                  return RearchBuilder(
+                    builder: (context, use) {
+                      use.stream(innerStream);
+                      return const CircularProgressIndicator();
+                    },
+                  );
+                } else {
+                  return const Text('switched');
+                }
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(find.text('switched'), findsNothing);
+
+    outerCompleter.complete(null);
+    await tester.pump();
+    expect(find.text('switched'), findsOneWidget);
+
+    innerCompleter.complete(null);
+    await tester.pump();
+    expect(find.text('switched'), findsOneWidget);
   });
 
   testWidgets('PageView control test (default args)', (tester) async {
@@ -283,5 +361,50 @@ void main() {
     expect(find.text('Page 3'), findsNothing);
 
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('automatic keep alive can be deactivated (#199)', (tester) async {
+    await tester.pumpWidget(
+      RearchBootstrapper(
+        child: MaterialApp(
+          home: RearchBuilder(
+            builder: (context, use) {
+              final switchedPage = use.data(false);
+
+              if (switchedPage.value) {
+                return const Text('No assert!');
+              }
+
+              return CustomScrollView(
+                slivers: [
+                  SliverList.list(
+                    children: List.generate(50, (index) {
+                      return RearchBuilder(
+                        builder: (context, use) {
+                          use.automaticKeepAlive();
+                          return SizedBox(
+                            width: 600,
+                            height: 200,
+                            child: TextButton(
+                              onPressed: () => switchedPage.value = true,
+                              child: Text('switch $index'),
+                            ),
+                          );
+                        },
+                      );
+                    }),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('switch 0'));
+    await tester.pump();
+
+    expect(find.text('No assert!'), findsOneWidget);
   });
 }

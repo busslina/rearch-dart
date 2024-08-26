@@ -3,6 +3,135 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 2024-08-17
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`flutter_rearch` - `v1.6.8`](#flutter_rearch---v168)
+
+---
+
+#### `flutter_rearch` - `v1.6.8`
+
+ - **FIX**: add workaround for flutter hot reload bug ([#210](https://github.com/GregoryConrad/rearch-dart/issues/210)).
+
+
+## 2024-06-18
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`flutter_rearch` - `v1.6.7`](#flutter_rearch---v167)
+
+---
+
+#### `flutter_rearch` - `v1.6.7`
+
+ - **FIX**: remove erroneous markNeedsBuild call in use.automaticKeepAlive ([#200](https://github.com/GregoryConrad/rearch-dart/issues/200)).
+
+
+## 2024-06-05
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`flutter_rearch` - `v1.6.6`](#flutter_rearch---v166)
+ - [`rearch` - `v1.10.1`](#rearch---v1101)
+ - [`ramen` - `v0.0.0-dev.6`](#ramen---v000-dev6)
+
+Packages with dependency updates only:
+
+> Packages listed below depend on other packages in this workspace that have had changes. Their versions have been incremented to bump the minimum dependency versions of the packages they depend upon in this project.
+
+ - `ramen` - `v0.0.0-dev.6`
+
+---
+
+#### `flutter_rearch` - `v1.6.6`
+
+ - **FIX**: correct use.stream/future cancellation code ([#196](https://github.com/GregoryConrad/rearch-dart/issues/196)).
+
+#### `rearch` - `v1.10.1`
+
+ - **FIX**: correct use.stream/future cancellation code ([#196](https://github.com/GregoryConrad/rearch-dart/issues/196)).
+
+
+## 2024-05-27
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`rearch` - `v1.10.0+0`](#rearch---v11000)
+ - [`flutter_rearch` - `v1.6.5+0`](#flutter_rearch---v1650)
+ - [`ramen` - `v0.0.0-dev.5`](#ramen---v000-dev5)
+
+Packages with dependency updates only:
+
+> Packages listed below depend on other packages in this workspace that have had changes. Their versions have been incremented to bump the minimum dependency versions of the packages they depend upon in this project.
+
+ - `ramen` - `v0.0.0-dev.5`
+
+---
+
+#### `rearch` - `v1.10.0+0`
+
+ - **DOCS**: update outdated bloc documentation links on README (#190)
+
+#### `flutter_rearch` - `v1.6.5+0`
+
+ - **DOCS**: update outdated bloc documentation links on README (#190)
+
+
+## 2024-05-26
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`flutter_rearch` - `v1.6.5`](#flutter_rearch---v165)
+
+---
+
+#### `flutter_rearch` - `v1.6.5`
+
+ - **FIX**: add warning for previously silent but faulty `use()`s ([#188](https://github.com/GregoryConrad/rearch-dart/issues/188)).
+
+
 ## 2024-05-16
 
 ### Changes

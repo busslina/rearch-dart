@@ -1,3 +1,11 @@
+## 1.10.1
+
+ - **FIX**: correct use.stream/future cancellation code ([#196](https://github.com/GregoryConrad/rearch-dart/issues/196)).
+
+## 1.10.0+0
+
+ - **DOCS**: update outdated bloc documentation links on README (#190)
+
 ## 1.10.0
 
  - **FEAT**: add `use.disposable` side effect.

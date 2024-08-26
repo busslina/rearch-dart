@@ -1,3 +1,23 @@
+## 1.6.8
+
+ - **FIX**: add workaround for flutter hot reload bug ([#210](https://github.com/GregoryConrad/rearch-dart/issues/210)).
+
+## 1.6.7
+
+ - **FIX**: remove erroneous markNeedsBuild call in use.automaticKeepAlive ([#200](https://github.com/GregoryConrad/rearch-dart/issues/200)).
+
+## 1.6.6
+
+ - **FIX**: correct use.stream/future cancellation code ([#196](https://github.com/GregoryConrad/rearch-dart/issues/196)).
+
+## 1.6.5+0
+
+ - **DOCS**: update outdated bloc documentation links on README (#190)
+
+## 1.6.5
+
+ - **FIX**: add warning for previously silent but faulty `use()`s ([#188](https://github.com/GregoryConrad/rearch-dart/issues/188)).
+
 ## 1.6.4
 
  - **FIX**: dispose FocusNodes created via side effects.
