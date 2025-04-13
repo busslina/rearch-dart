@@ -31,89 +31,96 @@ extension BuiltinSideEffects on SideEffectRegistrar {
   /// You may set the value of returned [ValueWrapper] both:
   /// 1. Outside of the build, like a normal call to `setState`
   /// 2. Inside of the build, to use its value inside build
-  /// This serves as an easier [stateGetterSetter] replacement
-  /// and can also be used instead of [state].
+  ///
+  /// This is a more powerful alternative to [state].
   ValueWrapper<T> data<T>(T initial) => use.lazyData(() => initial);
 
   /// Keeps track of some data that can be stateful.
   /// You may set the value of returned [ValueWrapper] both:
   /// 1. Outside of the build, like a normal call to `setState`
   /// 2. Inside of the build, to use its value inside build
-  /// This serves as an easier [lazyStateGetterSetter] replacement
-  /// and can also be used instead of [lazyState].
-  ValueWrapper<T> lazyData<T>(T Function() init) =>
-      use.lazyStateGetterSetter(init);
+  ///
+  /// This is a more powerful alternative to [lazyState].
+  ValueWrapper<T> lazyData<T>(T Function() init) {
+    // Create a place to store the data, which should be lazily initialized
+    final dataWrapper = use.callonce(() => _LazyMutable(init));
+
+    // Create a getter on first build, but allow it to be changed
+    final getterWrapper = use.callonce(() {
+      return _Mutable(() => dataWrapper.value);
+    });
+
+    // Keep the same setter between builds to prevent unnecessary rebuilds
+    final setter = use.register((api) {
+      return (T newState) {
+        api.rebuild((_) => dataWrapper.value = newState);
+      };
+    });
+
+    // If the data has changed, then we need to recreate the getter
+    // NOTE: https://github.com/GregoryConrad/rearch-dart/issues/277
+    final lastSeenDataWrapper = use.callonce(() {
+      // NOTE: We want to compare against something that definitely isn't equal
+      // the first time the state has been mutated.
+      // Thus, we use a private const object (const _Nothing()),
+      // since that is guaranteed to be equal to nothing else.
+      return _Mutable<Object?>(const _Nothing());
+    });
+    final hasDataChanged = dataWrapper.hasBeenMutated &&
+        dataWrapper.value != lastSeenDataWrapper.value;
+    if (hasDataChanged) {
+      getterWrapper.value = () => dataWrapper.value;
+      lastSeenDataWrapper.value = dataWrapper.value;
+    }
+
+    return (getterWrapper.value, setter);
+  }
 
   /// Side effect that provides a way for capsules to contain some state,
   /// where the initial state is computationally expensive.
   /// Further, instead of returning the state directly, this instead returns
   /// a getter that is safe to capture in closures.
+  ///
   /// Similar to the `useState` hook from React;
   /// see https://react.dev/reference/react/useState
+  ///
   /// # NOTE
   /// New applications are recommended to use [lazyData] instead.
-  (T Function(), void Function(T)) lazyStateGetterSetter<T>(T Function() init) {
-    // We use register directly to keep the same setter function across rebuilds
-    // (but we need to return a new getter on each build, see below for more)
-    final (getter, setter) = use.register((api) {
-      var hasBeenInit = false;
-      late T state;
-
-      T getter() {
-        if (!hasBeenInit) {
-          state = init();
-          hasBeenInit = true;
-        }
-        return state;
-      }
-
-      void setter(T newState) {
-        api.rebuild((cancelRebuild) {
-          if (hasBeenInit && newState == state) {
-            cancelRebuild();
-            return;
-          }
-
-          state = newState;
-          hasBeenInit = true;
-        });
-      }
-
-      return (getter, setter);
-    });
-
-    // We *MUST* return a new getter function here,
-    // which we do simply by making a new closure. See here for why:
-    // https://github.com/GregoryConrad/rearch-dart/issues/32#issuecomment-1868399873
-    // ignore: unnecessary_lambdas
-    return (() => getter(), setter);
-  }
+  @Deprecated('Use `use.lazyData` instead')
+  ValueWrapper<T> lazyStateGetterSetter<T>(T Function() init) =>
+      use.lazyData(init);
 
   /// Side effect that provides a way for capsules to contain some state.
   /// Further, instead of returning the state directly, this instead returns
   /// a getter that is safe to capture in closures.
+  ///
   /// Similar to the `useState` hook from React;
   /// see https://react.dev/reference/react/useState
+  ///
   /// # NOTE
   /// New applications are recommended to use [data] instead.
-  (T Function(), void Function(T)) stateGetterSetter<T>(T initial) =>
-      use.lazyStateGetterSetter(() => initial);
+  @Deprecated('Use `use.data` instead')
+  ValueWrapper<T> stateGetterSetter<T>(T initial) => use.data(initial);
 
   /// Side effect that provides a way for capsules to contain some state,
   /// where the initial state is computationally expensive.
+  ///
   /// Similar to the `useState` hook from React;
   /// see https://react.dev/reference/react/useState
+  ///
   /// # NOTE
   /// While [lazyState] will continue to work just fine,
   /// it is recommended that newer applications also take a look at [lazyData].
   (T, void Function(T)) lazyState<T>(T Function() init) {
-    final (getter, setter) = use.lazyStateGetterSetter(init);
+    final (getter, setter) = use.lazyData(init);
     return (getter(), setter);
   }
 
   /// Side effect that provides a way for capsules to contain some state.
+  ///
   /// Similar to the `useState` hook from React;
   /// see https://react.dev/reference/react/useState
+  ///
   /// # NOTE
   /// While [state] will continue to work just fine,
   /// it is recommended that newer applications also take a look at [data].
@@ -121,12 +128,14 @@ extension BuiltinSideEffects on SideEffectRegistrar {
 
   /// Side effect that provides a way for capsules to hold onto some value
   /// between builds, where the initial value is computationally expensive.
+  ///
   /// Similar to the `useRef` hook from React;
   /// see https://react.dev/reference/react/useRef
   T lazyValue<T>(T Function() init) => use.callonce(init);
 
   /// Side effect that provides a way for capsules to hold onto some value
   /// between builds.
+  ///
   /// Similar to the `useRef` hook from React;
   /// see https://react.dev/reference/react/useRef
   T value<T>(T initial) => use.lazyValue(() => initial);
@@ -444,7 +453,8 @@ extension BuiltinSideEffects on SideEffectRegistrar {
   }
 
   /// A side effect that allows you to watch a future that can be refreshed
-  /// by invoking the supplied callback.
+  /// by invoking the supplied callback
+  /// (which will also give you an updated copy of that future).
   ///
   /// You supply a [futureFactory], which is a function that must
   /// return a new instance of a future to be watched.
@@ -453,12 +463,12 @@ extension BuiltinSideEffects on SideEffectRegistrar {
   ///
   /// Internally creates the future to watch on the first build
   /// and then again whenever the returned callback is invoked.
-  (AsyncValue<T>, void Function()) refreshableFuture<T>(
+  (AsyncValue<T>, Future<T> Function()) refreshableFuture<T>(
     Future<T> Function() futureFactory,
   ) {
-    final (currFuture, setFuture) = use.lazyState(futureFactory);
-    final futureState = use.future(currFuture);
-    return (futureState, () => setFuture(futureFactory()));
+    final future = use.lazyData(futureFactory);
+    final futureState = use.future(future.value);
+    return (futureState, () => future.value = futureFactory());
   }
 
   /// A side effect that allows you to watch a future lazily
@@ -514,6 +524,33 @@ bool _didDepsListChange(List<Object?> newDeps, List<Object?>? oldDeps) {
       newDeps.length != oldDeps.length ||
       Iterable<int>.generate(newDeps.length)
           .any((i) => newDeps[i] != oldDeps[i]);
+}
+
+/// Purpose-driven mutable lazy wrapper
+final class _LazyMutable<T> {
+  _LazyMutable(this._init);
+
+  final T Function() _init;
+  late T _value = _init();
+
+  bool hasBeenMutated = false;
+
+  T get value => _value;
+  set value(T newValue) {
+    _value = newValue;
+    hasBeenMutated = true;
+  }
+}
+
+/// A poor man's interior mutability wrapper
+final class _Mutable<T> {
+  _Mutable(this.value);
+  T value;
+}
+
+/// Used to make a `const _Nothing()`, which is equal to nothing else.
+final class _Nothing {
+  const _Nothing();
 }
 
 /// A reducer [Function] that consumes some [State] and [Action] and returns

@@ -238,7 +238,7 @@ void main() {
     expect(builds[changingWatcher], equals(1));
 
     container.read(stateful).$2(0);
-    expect(builds[stateful], equals(1));
+    expect(builds[stateful], equals(2));
     expect(builds[unchangingIdempotentDep], equals(1));
     expect(builds[changingIdempotentDep], equals(1));
     expect(builds[unchangingWatcher], equals(1));
@@ -246,14 +246,14 @@ void main() {
 
     expect(container.read(unchangingWatcher), equals(0));
     expect(container.read(changingWatcher), equals(0));
-    expect(builds[stateful], equals(1));
+    expect(builds[stateful], equals(2));
     expect(builds[unchangingIdempotentDep], equals(1));
     expect(builds[changingIdempotentDep], equals(1));
     expect(builds[unchangingWatcher], equals(1));
     expect(builds[changingWatcher], equals(1));
 
     container.read(stateful).$2(1);
-    expect(builds[stateful], equals(2));
+    expect(builds[stateful], equals(3));
     expect(builds[unchangingIdempotentDep], equals(1));
     expect(builds[changingIdempotentDep], equals(1));
     expect(builds[unchangingWatcher], equals(1));
@@ -261,7 +261,7 @@ void main() {
 
     expect(container.read(unchangingWatcher), equals(0));
     expect(container.read(changingWatcher), equals(1));
-    expect(builds[stateful], equals(2));
+    expect(builds[stateful], equals(3));
     expect(builds[unchangingIdempotentDep], equals(2));
     expect(builds[changingIdempotentDep], equals(2));
     expect(builds[unchangingWatcher], equals(2));
@@ -271,7 +271,7 @@ void main() {
     container.read(impureSink);
 
     container.read(stateful).$2(2);
-    expect(builds[stateful], equals(3));
+    expect(builds[stateful], equals(4));
     expect(builds[unchangingIdempotentDep], equals(3));
     expect(builds[changingIdempotentDep], equals(3));
     expect(builds[unchangingWatcher], equals(2));
@@ -279,11 +279,26 @@ void main() {
 
     expect(container.read(unchangingWatcher), equals(0));
     expect(container.read(changingWatcher), equals(2));
-    expect(builds[stateful], equals(3));
+    expect(builds[stateful], equals(4));
     expect(builds[unchangingIdempotentDep], equals(3));
     expect(builds[changingIdempotentDep], equals(3));
     expect(builds[unchangingWatcher], equals(2));
     expect(builds[changingWatcher], equals(3));
+  });
+
+  test('errors propagate correctly', () {
+    Never throwsErrorCapsule(CapsuleHandle use) =>
+        throw UnsupportedError('capsule should throw');
+    Never dependentCapsule(CapsuleHandle use) => use(throwsErrorCapsule);
+    final container = useContainer();
+    expect(
+      () => container.read(throwsErrorCapsule),
+      throwsA(isA<UnsupportedError>()),
+    );
+    expect(
+      () => container.read(dependentCapsule),
+      throwsA(isA<UnsupportedError>()),
+    );
   });
 
   // We use a more sophisticated graph here for a more thorough
@@ -356,7 +371,7 @@ void main() {
     container.read(a).$2(0);
     expect(container.read(d), equals(1));
     expect(container.read(g), equals(2));
-    expect(builds[a], equals(1));
+    expect(builds[a], equals(2));
     expect(builds[b], equals(1));
     expect(builds[c], equals(1));
     expect(builds[d], equals(1));
@@ -366,7 +381,7 @@ void main() {
     expect(builds[h], equals(1));
 
     container.read(a).$2(1);
-    expect(builds[a], equals(2));
+    expect(builds[a], equals(3));
     expect(builds[b], equals(2));
     expect(builds[c], equals(1));
     expect(builds[d], equals(1));
@@ -377,7 +392,7 @@ void main() {
 
     expect(container.read(d), equals(3));
     expect(container.read(g), equals(5));
-    expect(builds[a], equals(2));
+    expect(builds[a], equals(3));
     expect(builds[b], equals(2));
     expect(builds[c], equals(2));
     expect(builds[d], equals(2));
@@ -385,36 +400,6 @@ void main() {
     expect(builds[f], equals(2));
     expect(builds[g], equals(2));
     expect(builds[h], equals(1));
-  });
-
-  test('fibonacci numbers', () {
-    Capsule<BigInt> Function(int) getFibonacciCapsuleAction(CapsuleHandle use) {
-      final fibCapsules = use.value(<int, Capsule<BigInt>>{});
-      return (n) {
-        return fibCapsules.putIfAbsent(n, () {
-          return (CapsuleHandle use) {
-            final getFibCapsule = use(getFibonacciCapsuleAction);
-            return switch (n) {
-              _ when n < 0 => throw ArgumentError.value(n),
-              0 => BigInt.zero,
-              1 => BigInt.one,
-              _ => use(getFibCapsule(n - 1)) + use(getFibCapsule(n - 2)),
-            };
-          };
-        });
-      };
-    }
-
-    final container = useContainer();
-    final getFibCapsule = container.read(getFibonacciCapsuleAction);
-    expect(
-      container.read(getFibCapsule(1000)).toString(),
-      equals(
-        '4346655768693745643568852767504062580256466051737178040248172908953655'
-        '5417949051890403879840079255169295922593080322634775209689623239873322'
-        '471161642996440906533187938298969649928516003704476137795166849228875',
-      ),
-    );
   });
 
   test('use() called after async gap throws', () {
@@ -532,6 +517,39 @@ void main() {
         container.warmUp([intWarmUpCapsule]),
         throwsA(isA<UnsupportedError>()),
       );
+    });
+  });
+
+  group('MockCapsuleContainer', () {
+    final cap = capsule((use) => 0);
+
+    test('throws when mocking initialized capsule', () {
+      expect(
+        () => useMockableContainer()
+          ..read(cap)
+          ..mock(cap).apply((use) => 123),
+        throwsA(isA<StateError>()),
+      );
+    });
+
+    test('throws when mocking already mocked capsule', () {
+      expect(
+        () => useMockableContainer()
+          ..mock(cap).apply((use) => 321)
+          ..mock(cap).apply((use) => 123),
+        throwsA(isA<StateError>()),
+      );
+    });
+
+    test('correctly mocks capsules', () {
+      final container = useMockableContainer().mock(cap).apply((use) => 123);
+      expect(container.read(cap), 123);
+
+      final dependent = capsule((use) => 2 * use(cap));
+      expect(container.read(dependent), equals(246));
+
+      final newCap = capsule((use) => use(cap));
+      expect(container.mock(newCap).apply((use) => 0).read(newCap), equals(0));
     });
   });
 }

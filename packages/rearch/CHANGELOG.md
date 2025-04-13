@@ -1,3 +1,33 @@
+## 1.16.0+0
+
+ - Bump "rearch" to `1.16.0+0`.
+
+## 1.16.0
+
+ - **FEAT**: add experimental `updateWith` method on `ValueWrapper` ([#254](https://github.com/GregoryConrad/rearch-dart/issues/254)).
+
+## 1.15.0
+
+ - **FEAT**: add `capsule` capsule creation convenience ([#245](https://github.com/GregoryConrad/rearch-dart/issues/245)).
+
+## 1.14.0
+
+ - **FEAT**: introduce new experimental dynamic capsule syntax ([#233](https://github.com/GregoryConrad/rearch-dart/issues/233)).
+
+## 1.13.0
+
+ - **FEAT**: stabilize and improve ergonomics of MockableContainer ([#230](https://github.com/GregoryConrad/rearch-dart/issues/230)).
+
+## 1.12.0
+
+ - **FEAT**: add experimental `capsule`/`dynamicCapsule` ([#226](https://github.com/GregoryConrad/rearch-dart/issues/226)).
+ - **FEAT**: add experimental dynamic capsules side effect ([#225](https://github.com/GregoryConrad/rearch-dart/issues/225)).
+
+## 1.11.0
+
+ - **REFACTOR**: deprecate old state side effects ([#224](https://github.com/GregoryConrad/rearch-dart/issues/224)).
+ - **FEAT**: `use.refreshableFuture` now returns its future ([#223](https://github.com/GregoryConrad/rearch-dart/issues/223)).
+
 ## 1.10.1
 
  - **FIX**: correct use.stream/future cancellation code ([#196](https://github.com/GregoryConrad/rearch-dart/issues/196)).

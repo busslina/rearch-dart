@@ -36,47 +36,25 @@ And with those, come:
 ## In a Nutshell
 Define your "capsules" (en-_capsulated_ pieces of data) at the top level:
 ```dart
-// Capsules are simply functions that consume a CapsuleHandle.
-// The CapsuleHandle lets you get the data of other capsules,
-// in addition to using a large variety of side effects.
-
 // This particular capsule manages a count from a classic example counter app,
 // using the state side effect.
-(int, void Function()) countManager(CapsuleHandle use) {
+final Capsule<(int, void Function())> countManager = capsule((CapsuleHandle use) {
   final (count, setCount) = use.state(0);
   return (count, () => setCount(count + 1));
-}
+});
 
 // This capsule provides the current count, plus one.
-int countPlusOneCapsule(CapsuleHandle use) => use(countManager).$1 + 1;
+final Capsule<int> countPlusOneCapsule = capsule((use) => use(countManager).$1 + 1);
 ```
+Capsules are simply functions that consume a `CapsuleHandle`.
+The `CapsuleHandle` lets you get the data of capsules via `use(someCapsule)`,
+in addition to using a large variety of side effects via `use.sideEffect()`.
 
 And then, if you are using Flutter, define some widgets:
 ```dart
 // Widgets are just like a special kind of capsule!
 // Instead of a CapsuleHandle, they consume a WidgetHandle.
 // They also live at the top level.
-@rearchWidget
-Widget counterAppBody(BuildContext context, WidgetHandle use) {
-  final (count, incrementCount) = use(countManager);
-  final countPlusOne = use(countPlusOneCapsule);
-  return Scaffold(
-    appBar: AppBar(title: Text('ReArch Demo')),
-    floatingActionButton: FloatingActionButton(
-      onPressed: incrementCount,
-      tooltip: 'Increment',
-      child: Icon(Icons.add),
-    ),
-    body: Center(
-      child: Text(
-        '$count + 1 = $countPlusOne',
-        style: TextTheme.of(context).headlineLarge,
-      ),
-    ),
-  );
-}
-
-// Or, until static metaprogramming roles around:
 class CounterAppBody extends RearchConsumer {
   const CounterAppBody({super.key});
 
@@ -101,10 +79,6 @@ class CounterAppBody extends RearchConsumer {
   }
 }
 ```
-
-*Note: the `@rearchWidget` above requires
-[static metaprogramming](https://github.com/dart-lang/language/issues/1482),
-which has not yet been released.*
 
 
 ## Getting Started

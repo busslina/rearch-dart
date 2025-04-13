@@ -3,6 +3,245 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 2025-02-01
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`flutter_rearch` - `v1.7.0`](#flutter_rearch---v170)
+
+---
+
+#### `flutter_rearch` - `v1.7.0`
+
+ - **FEAT**: add experimental `RearchInjection` widget for scoped state ([#267](https://github.com/GregoryConrad/rearch-dart/issues/267)).
+
+
+## 2025-01-30
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`rearch` - `v1.16.0+0`](#rearch---v11600)
+ - [`flutter_rearch` - `v1.6.14+0`](#flutter_rearch---v16140)
+ - [`ramen` - `v0.0.0-dev.13`](#ramen---v000-dev13)
+
+Packages with dependency updates only:
+
+> Packages listed below depend on other packages in this workspace that have had changes. Their versions have been incremented to bump the minimum dependency versions of the packages they depend upon in this project.
+
+ - `ramen` - `v0.0.0-dev.13`
+
+---
+
+#### `rearch` - `v1.16.0+0`
+
+ - Bump "rearch" to `1.16.0+0`.
+
+#### `flutter_rearch` - `v1.6.14+0`
+
+ - Bump "flutter_rearch" to `1.6.14+0`.
+
+
+## 2025-01-05
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`rearch` - `v1.16.0`](#rearch---v1160)
+ - [`flutter_rearch` - `v1.6.14`](#flutter_rearch---v1614)
+ - [`ramen` - `v0.0.0-dev.12`](#ramen---v000-dev12)
+
+Packages with dependency updates only:
+
+> Packages listed below depend on other packages in this workspace that have had changes. Their versions have been incremented to bump the minimum dependency versions of the packages they depend upon in this project.
+
+ - `flutter_rearch` - `v1.6.14`
+ - `ramen` - `v0.0.0-dev.12`
+
+---
+
+#### `rearch` - `v1.16.0`
+
+ - **FEAT**: add experimental `updateWith` method on `ValueWrapper` ([#254](https://github.com/GregoryConrad/rearch-dart/issues/254)).
+
+
+## 2024-12-18
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`flutter_rearch` - `v1.6.13`](#flutter_rearch---v1613)
+ - [`rearch` - `v1.15.0`](#rearch---v1150)
+ - [`ramen` - `v0.0.0-dev.11`](#ramen---v000-dev11)
+
+Packages with dependency updates only:
+
+> Packages listed below depend on other packages in this workspace that have had changes. Their versions have been incremented to bump the minimum dependency versions of the packages they depend upon in this project.
+
+ - `ramen` - `v0.0.0-dev.11`
+
+---
+
+#### `flutter_rearch` - `v1.6.13`
+
+ - **REFACTOR**: migrate widget side effects over to `use.disposable` ([#235](https://github.com/GregoryConrad/rearch-dart/issues/235)).
+
+#### `rearch` - `v1.15.0`
+
+ - **FEAT**: add `capsule` capsule creation convenience ([#245](https://github.com/GregoryConrad/rearch-dart/issues/245)).
+
+
+## 2024-10-20
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`rearch` - `v1.14.0`](#rearch---v1140)
+ - [`flutter_rearch` - `v1.6.12`](#flutter_rearch---v1612)
+ - [`ramen` - `v0.0.0-dev.10`](#ramen---v000-dev10)
+
+Packages with dependency updates only:
+
+> Packages listed below depend on other packages in this workspace that have had changes. Their versions have been incremented to bump the minimum dependency versions of the packages they depend upon in this project.
+
+ - `flutter_rearch` - `v1.6.12`
+ - `ramen` - `v0.0.0-dev.10`
+
+---
+
+#### `rearch` - `v1.14.0`
+
+ - **FEAT**: introduce new experimental dynamic capsule syntax ([#233](https://github.com/GregoryConrad/rearch-dart/issues/233)).
+
+
+## 2024-10-10
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`rearch` - `v1.13.0`](#rearch---v1130)
+ - [`flutter_rearch` - `v1.6.11`](#flutter_rearch---v1611)
+ - [`ramen` - `v0.0.0-dev.9`](#ramen---v000-dev9)
+
+Packages with dependency updates only:
+
+> Packages listed below depend on other packages in this workspace that have had changes. Their versions have been incremented to bump the minimum dependency versions of the packages they depend upon in this project.
+
+ - `flutter_rearch` - `v1.6.11`
+ - `ramen` - `v0.0.0-dev.9`
+
+---
+
+#### `rearch` - `v1.13.0`
+
+ - **FEAT**: stabilize and improve ergonomics of MockableContainer ([#230](https://github.com/GregoryConrad/rearch-dart/issues/230)).
+
+
+## 2024-09-28
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`rearch` - `v1.12.0`](#rearch---v1120)
+ - [`flutter_rearch` - `v1.6.10`](#flutter_rearch---v1610)
+ - [`ramen` - `v0.0.0-dev.8`](#ramen---v000-dev8)
+
+Packages with dependency updates only:
+
+> Packages listed below depend on other packages in this workspace that have had changes. Their versions have been incremented to bump the minimum dependency versions of the packages they depend upon in this project.
+
+ - `flutter_rearch` - `v1.6.10`
+ - `ramen` - `v0.0.0-dev.8`
+
+---
+
+#### `rearch` - `v1.12.0`
+
+ - **FEAT**: add experimental `capsule`/`dynamicCapsule` ([#226](https://github.com/GregoryConrad/rearch-dart/issues/226)).
+ - **FEAT**: add experimental dynamic capsules side effect ([#225](https://github.com/GregoryConrad/rearch-dart/issues/225)).
+
+
+## 2024-09-26
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`rearch` - `v1.11.0`](#rearch---v1110)
+ - [`flutter_rearch` - `v1.6.9`](#flutter_rearch---v169)
+ - [`ramen` - `v0.0.0-dev.7`](#ramen---v000-dev7)
+
+Packages with dependency updates only:
+
+> Packages listed below depend on other packages in this workspace that have had changes. Their versions have been incremented to bump the minimum dependency versions of the packages they depend upon in this project.
+
+ - `flutter_rearch` - `v1.6.9`
+ - `ramen` - `v0.0.0-dev.7`
+
+---
+
+#### `rearch` - `v1.11.0`
+
+ - **REFACTOR**: deprecate old state side effects ([#224](https://github.com/GregoryConrad/rearch-dart/issues/224)).
+ - **FEAT**: `use.refreshableFuture` now returns its future ([#223](https://github.com/GregoryConrad/rearch-dart/issues/223)).
+
+
 ## 2024-08-17
 
 ### Changes

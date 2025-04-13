@@ -1,3 +1,35 @@
+## 1.7.0
+
+ - **FEAT**: add experimental `RearchInjection` widget for scoped state ([#267](https://github.com/GregoryConrad/rearch-dart/issues/267)).
+
+## 1.6.14+0
+
+ - Bump "flutter_rearch" to `1.6.14+0`.
+
+## 1.6.14
+
+ - Update a dependency to the latest release.
+
+## 1.6.13
+
+ - **REFACTOR**: migrate widget side effects over to `use.disposable` ([#235](https://github.com/GregoryConrad/rearch-dart/issues/235)).
+
+## 1.6.12
+
+ - Update a dependency to the latest release.
+
+## 1.6.11
+
+ - Update a dependency to the latest release.
+
+## 1.6.10
+
+ - Update a dependency to the latest release.
+
+## 1.6.9
+
+ - Update a dependency to the latest release.
+
 ## 1.6.8
 
  - **FIX**: add workaround for flutter hot reload bug ([#210](https://github.com/GregoryConrad/rearch-dart/issues/210)).

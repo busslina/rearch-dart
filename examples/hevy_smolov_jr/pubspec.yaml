@@ -1,0 +1,26 @@
+name: hevy_smolov_jr
+description: Smolov Jr Calculator for Hevy
+publish_to: none
+
+environment:
+  sdk: ">=3.5.3 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_rearch: ^1.7.0
+  freezed_annotation: ^3.0.0
+  fuzzywuzzy: ^1.2.0
+  http: ^1.2.2
+  json_annotation: ^4.9.0
+  rearch: ^1.16.0+0
+  shared_preferences: ^2.3.2
+  url_launcher: ^6.3.1
+
+dev_dependencies:
+  build_runner: ^2.4.13
+  freezed: ^3.0.3
+  json_serializable: ^6.8.0
+
+flutter:
+  uses-material-design: true

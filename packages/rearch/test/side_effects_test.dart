@@ -1,12 +1,12 @@
+import 'package:rearch/experimental.dart';
 import 'package:rearch/rearch.dart';
 import 'package:test/test.dart';
 
 import 'util.dart';
 
 void main() {
-  test('stateGetterSetter dependents should rebuild when state updated', () {
-    (int Function(), void Function(int)) stateCapsule(CapsuleHandle use) =>
-        use.stateGetterSetter(0);
+  test('use.data() dependents should rebuild when state updated', () {
+    ValueWrapper<int> stateCapsule(CapsuleHandle use) => use.data(0);
     int currStateCapsule(CapsuleHandle use) => use(stateCapsule).$1();
 
     final container = useContainer();
@@ -40,6 +40,41 @@ void main() {
     expect(getState(), equals(const AsyncLoading(Some(0))));
     await Future.delayed(Duration.zero, () => null);
     expect((getState() as AsyncError<int>).previousData, equals(const Some(0)));
+  });
+
+  test('refreshableFuture', () async {
+    var shouldError = false;
+
+    (AsyncValue<int>, Future<int> Function()) testCapsule(CapsuleHandle use) {
+      return use.refreshableFuture(() async {
+        if (shouldError) throw Exception();
+        return 0;
+      });
+    }
+
+    final container = useContainer();
+
+    AsyncValue<int> getState() => container.read(testCapsule).$1;
+    Future<int> refresh() => container.read(testCapsule).$2();
+
+    expect(getState(), equals(const AsyncLoading(None<int>())));
+    await Future.delayed(Duration.zero, () => null);
+    expect(getState(), equals(const AsyncData(0)));
+
+    shouldError = true;
+    final future = refresh();
+
+    expect(getState(), equals(const AsyncLoading(Some(0))));
+    expect(future, throwsA(isA<Exception>()));
+    await Future.delayed(Duration.zero, () => null);
+    expect((getState() as AsyncError<int>).previousData, equals(const Some(0)));
+
+    shouldError = false;
+    final newFuture = refresh();
+
+    expect(getState(), equals(const AsyncLoading(Some(0))));
+    expect(await newFuture, equals(0));
+    expect((getState() as AsyncData<int>).data, equals(0));
   });
 
   test('hydrate', () async {
@@ -356,9 +391,9 @@ void main() {
 
     test('side effect mutations are batched at end of txn', () {
       var builds = 0;
-      (int Function(), void Function(int)) lazyStateCapsule(CapsuleHandle use) {
+      ValueWrapper<int> lazyStateCapsule(CapsuleHandle use) {
         builds++;
-        return use.stateGetterSetter(0);
+        return use.data(0);
       }
 
       final container = useContainer();
@@ -373,11 +408,10 @@ void main() {
     });
   });
 
-  test("lazyStateGetterSetter doesn't call init fn unless necessary", () {
+  test("use.lazyData() doesn't call init fn unless necessary", () {
     var initCalls = 0;
     void init() => initCalls++;
-    (void Function(), void Function(void)) testCapsule(CapsuleHandle use) =>
-        use.lazyStateGetterSetter(init);
+    ValueWrapper<void> testCapsule(CapsuleHandle use) => use.lazyData(init);
 
     final container1 = useContainer();
     container1.read(testCapsule).$1();
@@ -387,6 +421,29 @@ void main() {
     container2.read(testCapsule).$2(null);
     container2.read(testCapsule).$1();
     expect(initCalls, equals(1));
+  });
+
+  test('use.lazyData() getter is memoized (#277)', () {
+    final stateCapsule = capsule((use) => use.lazyData(() => 0));
+
+    final container = useContainer();
+    final originalGetter = container.read(stateCapsule).$1;
+
+    container.read(stateCapsule).value = 0;
+    final unchangedGetter = container.read(stateCapsule).$1;
+    expect(unchangedGetter, isNot(equals(originalGetter)));
+
+    container.read(stateCapsule).value = 1;
+    final changedGetter = container.read(stateCapsule).$1;
+    expect(changedGetter, isNot(equals(originalGetter)));
+
+    container.read(stateCapsule).value = 1;
+    final unchangedGetter2 = container.read(stateCapsule).$1;
+    expect(unchangedGetter2, equals(changedGetter));
+
+    container.read(stateCapsule).value = 2;
+    final changedGetter2 = container.read(stateCapsule).$1;
+    expect(changedGetter2, isNot(equals(unchangedGetter2)));
   });
 
   group('disposable creates and disposes objects', () {
@@ -423,6 +480,27 @@ void main() {
       expect(check, equals(1));
       container.dispose();
       expect(check, equals(2));
+    });
+  });
+
+  group('dynamic capsules', () {
+    // NOTE: due to a Dart type system quirk (relating only to local variables),
+    // this has to be written with `late final` and defined on a new line.
+    late final DynamicCapsule<int, BigInt> fibonacciCapsule;
+    fibonacciCapsule = capsule.dynamic((use, int n) {
+      return switch (n) {
+        _ when n < 0 => throw ArgumentError.value(n),
+        0 => BigInt.zero,
+        1 => BigInt.one,
+        _ => use(fibonacciCapsule[n - 1]) + use(fibonacciCapsule[n - 2]),
+      };
+    });
+
+    test('allow correct creation of fibonacci numbers', () {
+      expect(
+        useContainer().read(fibonacciCapsule[100]).toString(),
+        equals('354224848179261915075'),
+      );
     });
   });
 }
