@@ -43,4 +43,4 @@ abstract interface class WidgetSideEffectRegistrar
 /// register [SideEffect]s, so all Capsule-specific methodologies
 /// carry over.
 abstract interface class WidgetHandle
-    implements CapsuleReader, WidgetSideEffectRegistrar {}
+    implements CapsuleReader, WidgetSideEffectRegistrar, RearchHandle {}

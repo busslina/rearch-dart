@@ -61,10 +61,12 @@ abstract interface class SideEffectRegistrar {
   T register<T>(SideEffect<T> sideEffect);
 }
 
+abstract interface class RearchHandle
+    implements CapsuleReader, SideEffectRegistrar {}
+
 /// The handle given to a [Capsule] to build its data.
 /// See [CapsuleReader] and [SideEffectRegistrar].
-abstract interface class CapsuleHandle
-    implements CapsuleReader, SideEffectRegistrar {}
+abstract interface class CapsuleHandle implements RearchHandle {}
 
 /// Defines what a [SideEffect] should look like (a [Function]
 /// that consumes a [SideEffectApi] and returns something).
