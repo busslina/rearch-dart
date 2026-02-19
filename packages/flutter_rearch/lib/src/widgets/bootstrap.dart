@@ -8,10 +8,7 @@ part of '../widgets.dart';
 /// {@endtemplate}
 class RearchBootstrapper extends StatefulWidget {
   /// {@macro rearch.bootstrapper}
-  const RearchBootstrapper({
-    required this.child,
-    super.key,
-  });
+  const RearchBootstrapper({required this.child, super.key});
 
   /// The child of this [RearchBootstrapper].
   final Widget child;
@@ -37,9 +34,6 @@ class _RearchBootstrapperState extends State<RearchBootstrapper> {
 
   @override
   Widget build(BuildContext context) {
-    return CapsuleContainerProvider(
-      container: container,
-      child: widget.child,
-    );
+    return CapsuleContainerProvider(container: container, child: widget.child);
   }
 }

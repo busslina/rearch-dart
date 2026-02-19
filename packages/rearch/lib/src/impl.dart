@@ -67,9 +67,7 @@ class _CapsuleManager extends DataflowGraphNode
   }
 
   @override
-  void rebuild([
-    void Function(void Function() cancelRebuild)? sideEffectMutation,
-  ]) {
+  void rebuild() {
     if (container._currBuildingManager != null) {
       assert(
         container._currBuildingManager == this,
@@ -81,18 +79,11 @@ class _CapsuleManager extends DataflowGraphNode
         'https://rearch.gsconrad.com/core/effects#transactions',
       );
 
-      // Call the mutation with a no-op cancelRebuild
-      // (since we are already in the midst of building ourselves).
-      sideEffectMutation?.call(() {});
       return;
     }
 
     container.runTransaction(() {
-      container._sideEffectMutationsToCallInTxn!.add(() {
-        var isCanceled = false;
-        sideEffectMutation?.call(() => isCanceled = true);
-        return isCanceled ? null : this;
-      });
+      container._pendingRebuildManagers!.add(this);
     });
   }
 

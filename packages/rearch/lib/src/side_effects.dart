@@ -15,10 +15,7 @@ extension BuiltinSideEffects on SideEffectRegistrar {
   SideEffectApi api() => use.register((api) => api);
 
   /// Convenience side effect that gives a copy of [SideEffectApi.rebuild].
-  void Function([
-    void Function(void Function() cancelRebuild)? sideEffectMutation,
-  ])
-  rebuilder() => use.api().rebuild;
+  void Function() rebuilder() => use.api().rebuild;
 
   /// Convenience side effect that gives a copy of
   /// [SideEffectApi.runTransaction].
@@ -33,6 +30,17 @@ extension BuiltinSideEffects on SideEffectRegistrar {
   /// 1. Outside of the build, like a normal call to `setState`
   /// 2. Inside of the build, to use its value inside build
   ///
+  /// Setting this wrapper updates its local value immediately, so the next
+  /// read from the same wrapper/getter sees the new value, regardless of
+  /// transaction level (outside transactions, root transactions, or nested
+  /// transactions).
+  ///
+  /// Dependent capsule rebuilds still flow through transactions and may happen
+  /// later.
+  ///
+  /// Transaction level matters for dependents: queued side-effect mutations
+  /// flush at the root transaction boundary (not at every nested level).
+  ///
   /// This is a more powerful alternative to [state].
   ValueWrapper<T> data<T>(T initial) => use.lazyData(() => initial);
 
@@ -41,41 +49,24 @@ extension BuiltinSideEffects on SideEffectRegistrar {
   /// 1. Outside of the build, like a normal call to `setState`
   /// 2. Inside of the build, to use its value inside build
   ///
+  /// Setting this wrapper updates its local value immediately, so the next
+  /// read from the same wrapper/getter sees the new value, regardless of
+  /// transaction level (outside transactions, root transactions, or nested
+  /// transactions).
+  ///
+  /// Dependent capsule rebuilds still flow through transactions and may happen
+  /// later.
+  ///
+  /// Transaction level matters for dependents: queued side-effect mutations
+  /// flush at the root transaction boundary (not at every nested level).
+  ///
   /// This is a more powerful alternative to [lazyState].
   ValueWrapper<T> lazyData<T>(T Function() init) {
-    // Create a place to store the data, which should be lazily initialized
-    final dataWrapper = use.callonce(() => _LazyMutable(init));
+    final innerData = use.callonce(() => _LazyDataBox(init));
+    final rebuild = use.rebuilder();
+    innerData.rebuild = rebuild;
 
-    // Create a getter on first build, but allow it to be changed
-    final getterWrapper = use.callonce(() {
-      return _Mutable(() => dataWrapper.value);
-    });
-
-    // Keep the same setter between builds to prevent unnecessary rebuilds
-    final setter = use.register((api) {
-      return (T newState) {
-        api.rebuild((_) => dataWrapper.value = newState);
-      };
-    });
-
-    // If the data has changed, then we need to recreate the getter
-    // NOTE: https://github.com/GregoryConrad/rearch-dart/issues/277
-    final lastSeenDataWrapper = use.callonce(() {
-      // NOTE: We want to compare against something that definitely isn't equal
-      // the first time the state has been mutated.
-      // Thus, we use a private const object (const _Nothing()),
-      // since that is guaranteed to be equal to nothing else.
-      return _Mutable<Object?>(const _Nothing());
-    });
-    final hasDataChanged =
-        dataWrapper.hasBeenMutated &&
-        dataWrapper.value != lastSeenDataWrapper.value;
-    if (hasDataChanged) {
-      getterWrapper.value = () => dataWrapper.value;
-      lastSeenDataWrapper.value = dataWrapper.value;
-    }
-
-    return (getterWrapper.value, setter);
+    return (innerData.getter, innerData.setValue);
   }
 
   /// Side effect that provides a way for capsules to contain some state,
@@ -162,10 +153,10 @@ extension BuiltinSideEffects on SideEffectRegistrar {
   /// See https://react.dev/reference/react/useMemo
   T memo<T>(T Function() memo, [List<Object?> dependencies = const []]) {
     final oldDependencies = use.previous(dependencies);
-    final (getData, setData) = use.lazyData<T>(
-      () => throw StateError('Should be manually set before get'),
-    );
-    if (_didDepsListChange(dependencies, oldDependencies)) {
+    final (getData, setData) = use.lazyData<T>(memo);
+
+    if (!use.isFirstBuild() &&
+        _didDepsListChange(dependencies, oldDependencies)) {
       setData(memo());
     }
     return getData();
@@ -218,10 +209,7 @@ extension BuiltinSideEffects on SideEffectRegistrar {
     State initialState,
   ) {
     final (currState, setState) = use.state(initialState);
-    return (
-      currState,
-      (action) => setState(reducer(currState, action)),
-    );
+    return (currState, (action) => setState(reducer(currState, action)));
   }
 
   /// Provides a way to keep track of some state while also providing
@@ -232,31 +220,31 @@ extension BuiltinSideEffects on SideEffectRegistrar {
   /// that sets the current state.
   /// The returned `undo` and `redo` [Function]s will both be null if
   /// there are no states available to undo and redo, respectively.
-  (T?, void Function(T), {void Function()? undo, void Function()? redo})
-  replay<T>() {
-    final undoStack = use.value(<T>[]);
-    final redoStack = use.value(<T>[]);
-    final rebuild = use.rebuilder();
+  // (T?, void Function(T), {void Function()? undo, void Function()? redo})
+  // replay<T>() {
+  //   final undoStack = use.value(<T>[]);
+  //   final redoStack = use.value(<T>[]);
+  //   final rebuild = use.rebuilder();
 
-    return (
-      undoStack.lastOrNull,
-      (newState) => rebuild((cancelRebuild) {
-        if (undoStack.isNotEmpty && newState == undoStack.last) {
-          cancelRebuild();
-          return;
-        }
+  //   return (
+  //     undoStack.lastOrNull,
+  //     (newState) => rebuild((cancelRebuild) {
+  //       if (undoStack.isNotEmpty && newState == undoStack.last) {
+  //         cancelRebuild();
+  //         return;
+  //       }
 
-        redoStack.clear();
-        undoStack.add(newState);
-      }),
-      undo: undoStack.isEmpty
-          ? null
-          : () => rebuild((_) => redoStack.add(undoStack.removeLast())),
-      redo: redoStack.isEmpty
-          ? null
-          : () => rebuild((_) => undoStack.add(redoStack.removeLast())),
-    );
-  }
+  //       redoStack.clear();
+  //       undoStack.add(newState);
+  //     }),
+  //     undo: undoStack.isEmpty
+  //         ? null
+  //         : () => rebuild((_) => redoStack.add(undoStack.removeLast())),
+  //     redo: redoStack.isEmpty
+  //         ? null
+  //         : () => rebuild((_) => undoStack.add(redoStack.removeLast())),
+  //   );
+  // }
 
   /// Consumes a [Future] and watches the given [future].
   ///
@@ -327,20 +315,17 @@ extension BuiltinSideEffects on SideEffectRegistrar {
       AsyncLoading<T>(None<T>()),
     );
 
-    use.effect(
-      () {
-        setValue(AsyncLoading(getValue().data));
+    use.effect(() {
+      setValue(AsyncLoading(getValue().data));
 
-        final subscription = stream?.listen(
-          (data) => setValue(AsyncData(data)),
-          onError: (Object error, StackTrace trace) =>
-              setValue(AsyncError(error, trace, getValue().data)),
-          cancelOnError: false,
-        );
-        return () => subscription?.cancel();
-      },
-      [stream],
-    );
+      final subscription = stream?.listen(
+        (data) => setValue(AsyncData(data)),
+        onError: (Object error, StackTrace trace) =>
+            setValue(AsyncError(error, trace, getValue().data)),
+        cancelOnError: false,
+      );
+      return () => subscription?.cancel();
+    }, [stream]);
 
     return stream == null ? null : getValue();
   }
@@ -429,29 +414,21 @@ extension BuiltinSideEffects on SideEffectRegistrar {
     final (future, setFuture) = use.state<Future<T>?>(null);
     final asStream = use.memo(() => future?.asStream(), [future]);
 
-    use.effect(
-      () {
-        setValue(
-          asStream == null ? null : AsyncLoading(getValue()?.data ?? None<T>()),
-        );
+    use.effect(() {
+      setValue(
+        asStream == null ? null : AsyncLoading(getValue()?.data ?? None<T>()),
+      );
 
-        final subscription = asStream?.listen(
-          (data) => setValue(AsyncData(data)),
-          onError: (Object error, StackTrace trace) => setValue(
-            AsyncError(error, trace, getValue()?.data ?? None<T>()),
-          ),
-        );
+      final subscription = asStream?.listen(
+        (data) => setValue(AsyncData(data)),
+        onError: (Object error, StackTrace trace) =>
+            setValue(AsyncError(error, trace, getValue()?.data ?? None<T>())),
+      );
 
-        return () => subscription?.cancel();
-      },
-      [asStream],
-    );
+      return () => subscription?.cancel();
+    }, [asStream]);
 
-    return (
-      state: getValue(),
-      mutate: setFuture,
-      clear: () => setFuture(null),
-    );
+    return (state: getValue(), mutate: setFuture, clear: () => setFuture(null));
   }
 
   /// A side effect that allows you to watch a future that can be refreshed
@@ -501,9 +478,8 @@ extension BuiltinSideEffects on SideEffectRegistrar {
           setAsyncState(AsyncLoading<T>(getAsyncState().data));
           final subscription = futureFactory().asStream().listen(
             (data) => setAsyncState(AsyncData(data)),
-            onError: (Object error, StackTrace trace) => setAsyncState(
-              AsyncError(error, trace, getAsyncState().data),
-            ),
+            onError: (Object error, StackTrace trace) =>
+                setAsyncState(AsyncError(error, trace, getAsyncState().data)),
           );
           setFutureCancel(subscription.cancel);
         }
@@ -528,33 +504,6 @@ bool _didDepsListChange(List<Object?> newDeps, List<Object?>? oldDeps) {
       Iterable<int>.generate(
         newDeps.length,
       ).any((i) => newDeps[i] != oldDeps[i]);
-}
-
-/// Purpose-driven mutable lazy wrapper
-final class _LazyMutable<T> {
-  _LazyMutable(this._init);
-
-  final T Function() _init;
-  late T _value = _init();
-
-  bool hasBeenMutated = false;
-
-  T get value => _value;
-  set value(T newValue) {
-    _value = newValue;
-    hasBeenMutated = true;
-  }
-}
-
-/// A poor man's interior mutability wrapper
-final class _Mutable<T> {
-  _Mutable(this.value);
-  T value;
-}
-
-/// Used to make a `const _Nothing()`, which is equal to nothing else.
-final class _Nothing {
-  const _Nothing();
 }
 
 /// A reducer [Function] that consumes some [State] and [Action] and returns
@@ -582,4 +531,40 @@ extension ValueWrapperProperty<T> on ValueWrapper<T> {
 
   /// Sets the underlying value to [newValue] using the [ValueWrapper]'s setter.
   set value(T newValue) => $2(newValue);
+}
+
+/// Internal storage for `lazyData`.
+///
+/// Keeps a locally mutable value that is visible immediately through [getter]
+/// after [setValue], then triggers [rebuild] so dependent capsules are updated
+/// through the transaction pipeline.
+final class _LazyDataBox<T> {
+  _LazyDataBox(this._init);
+
+  final T Function() _init;
+  late void Function() rebuild;
+  late final T _initialValue = _init();
+
+  Option<T> _mutatedValue = const None();
+
+  late T Function() getter = () => value;
+
+  T get value => _mutatedValue is Some<T>
+      ? (_mutatedValue as Some<T>).value
+      : _initialValue;
+
+  /// Updates local value immediately, regenerates [getter], then requests
+  /// a rebuild.
+  void setValue(T newValue) {
+    if (value == newValue) {
+      return;
+    }
+
+    _mutatedValue = Some(newValue);
+
+    // Regenerating the getter
+    getter = () => value;
+
+    rebuild();
+  }
 }

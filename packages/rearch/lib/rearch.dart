@@ -83,13 +83,7 @@ typedef SideEffectApiCallback = void Function();
 @experimental
 abstract interface class SideEffectApi {
   /// Triggers a rebuild in the supplied capsule.
-  ///
-  /// The supplied [sideEffectMutation] will be called with a `void Function()`
-  /// argument that can be invoked from within the [sideEffectMutation] to
-  /// cancel the rebuild (say, if the side effect state doesn't need to change).
-  void rebuild([
-    void Function(void Function() cancelRebuild)? sideEffectMutation,
-  ]);
+  void rebuild();
 
   /// Registers the given [SideEffectApiCallback]
   /// to be called on capsule disposal.
@@ -111,37 +105,37 @@ abstract interface class SideEffectApi {
 class CapsuleContainer implements Disposable {
   final _capsules = <_UntypedCapsule, _CapsuleManager>{};
 
-  /// Non-null indicates we are currently in a transaction,
-  /// with the side effect mutations to call in the [List].
-  /// When null, we are not in a transaction and we must make one for rebuilds.
-  /// Side effect mutations return their _CapsuleManager when it should
-  /// be rebuilt, and null when the side effect state wasn't updated.
-  List<_CapsuleManager? Function()>? _sideEffectMutationsToCallInTxn;
+  /// Non-null indicates we are currently in a transaction, with managers that
+  /// requested rebuilds in this transaction.
+  ///
+  /// When null, we are not in a transaction and rebuild requests create one.
+  ///
+  /// Managers are collected across nested transactions and flushed once at the
+  /// root transaction boundary.
+  List<_CapsuleManager>? _pendingRebuildManagers;
 
   /// The currently building [_CapsuleManager].
   /// Needed so we can check whether a rebuild called within a build is valid;
   /// i.e., whether the rebuild was called within its own capsule's build.
   _CapsuleManager? _currBuildingManager;
 
-  /// Runs the supplied [sideEffectTransaction] that combines all side effect
-  /// state updates into a single container rebuild sweep.
-  /// These state updates can originate from the same or different capsules,
-  /// enabling you to make transactional side effect changes across capsules.
+  /// Runs [sideEffectTransaction] inside a container transaction.
+  ///
+  /// Nested transactions are supported. Rebuild requests are accumulated during
+  /// nested execution and flushed once at the root transaction boundary.
+  /// Rebuild managers are deduplicated before the rebuild sweep.
   void runTransaction(void Function() sideEffectTransaction) {
     // We can have nested transactions, so check whether we are the "root" txn.
     // If we are, then we need to handle the actual capsule builds and cleanup.
-    final isRootTxn = _sideEffectMutationsToCallInTxn == null;
-    if (isRootTxn) _sideEffectMutationsToCallInTxn = [];
+    final isRootTxn = _pendingRebuildManagers == null;
+    if (isRootTxn) _pendingRebuildManagers = [];
 
     sideEffectTransaction();
 
     if (isRootTxn) {
-      final managersToRebuild = _sideEffectMutationsToCallInTxn!
-          .map((mutation) => mutation())
-          .nonNulls
-          .toSet();
+      final managersToRebuild = _pendingRebuildManagers!.toSet();
       DataflowGraphNode.buildNodesAndDependents(managersToRebuild);
-      _sideEffectMutationsToCallInTxn = null;
+      _pendingRebuildManagers = null;
     }
   }
 
