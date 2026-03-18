@@ -27,16 +27,22 @@ typedef Capsule<T> = T Function(CapsuleHandle);
 /// See [CapsuleContainer.listen].
 typedef CapsuleListener = void Function(CapsuleHandle);
 
+abstract interface class RearchManagerI {
+  bool get isBuilding;
+
+  bool get isInsideTransaction;
+}
+
 /// Provides a mechanism to read the current state of [Capsule]s.
 // ignore: one_member_abstracts
-abstract interface class CapsuleReader {
+abstract interface class CapsuleReader implements RearchManagerI {
   /// Reads the data of the supplied [Capsule].
   T call<T>(Capsule<T> capsule);
 }
 
 /// Provides a mechanism ([register]) to register side effects.
 // ignore: one_member_abstracts
-abstract interface class SideEffectRegistrar {
+abstract interface class SideEffectRegistrar implements RearchManagerI {
   /// Registers the given side effect
   /// and serves as the underlying base of all side effects.
   ///
@@ -225,6 +231,8 @@ class CapsuleContainer implements Disposable {
       manager.dispose();
     }
   }
+
+  bool get isInsideTransaction => _pendingRebuildManagers != null;
 }
 
 /// A [CapsuleContainer] that additionally allows you to [mock] capsules

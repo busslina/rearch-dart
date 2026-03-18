@@ -224,4 +224,12 @@ class _WidgetHandleImpl implements WidgetHandle {
     }
     return api.manager.sideEffectData[sideEffectDataIndex++] as T;
   }
+
+  @override
+  bool get isBuilding =>
+      // ignore: only_throw_errors
+      throw 'Bad usage: isBuilding must not be called from a WidgetHandle!';
+
+  @override
+  bool get isInsideTransaction => container.isInsideTransaction;
 }

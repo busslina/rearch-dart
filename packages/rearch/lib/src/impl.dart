@@ -98,6 +98,8 @@ class _CapsuleManager extends DataflowGraphNode
   @override
   void runTransaction(void Function() sideEffectTransaction) =>
       container.runTransaction(sideEffectTransaction);
+
+  bool get isBuilding => container._currBuildingManager == this;
 }
 
 class _CapsuleHandleImpl implements CapsuleHandle {
@@ -135,4 +137,10 @@ class _CapsuleHandleImpl implements CapsuleHandle {
     }
     return manager.sideEffectData[sideEffectDataIndex++] as T;
   }
+
+  @override
+  bool get isBuilding => manager.isBuilding;
+
+  @override
+  bool get isInsideTransaction => manager.container.isInsideTransaction;
 }
