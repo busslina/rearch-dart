@@ -104,6 +104,15 @@ abstract interface class SideEffectApi {
   /// within a singular rebuild call,
   /// rebuilding all appropriate capsules at the conclusion of the transaction.
   void runTransaction(void Function() sideEffectTransaction);
+
+  /// Returns a callback that attempts to dispose the current capsule
+  /// only if it has no dependents.
+  ///
+  /// The returned callback must be called outside of any ongoing capsule build.
+  ///
+  /// The callback returns true when disposal succeeds, and false when disposal
+  /// is blocked because at least one dependent is still attached.
+  bool Function() disposer();
 }
 
 /// Contains the data of [Capsule]s.

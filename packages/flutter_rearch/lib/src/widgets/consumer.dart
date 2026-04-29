@@ -176,6 +176,9 @@ class _WidgetSideEffectApiProxyImpl implements WidgetSideEffectApi {
       CapsuleContainerProvider.containerOf(
         manager,
       ).runTransaction(sideEffectTransaction);
+
+  @override
+  bool Function() disposer() => throw UnimplementedError();
 }
 
 class _WidgetHandleImpl implements WidgetHandle {

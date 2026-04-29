@@ -81,6 +81,9 @@ class _CapsuleManager extends DataflowGraphNode
   }
 
   @override
+  bool Function() disposer() => disposeIfNoDependents;
+
+  @override
   void dispose() {
     super.dispose();
     container._capsules.remove(capsule);
