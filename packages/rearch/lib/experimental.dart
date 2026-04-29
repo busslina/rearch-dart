@@ -80,6 +80,7 @@ final class DynamicOrchestrator<Param, Return> {
   final void Function(Param)? _onDispose;
   final Map<Param, Capsule<Return>> _capsules = {};
   final Map<Param, DataflowGraphNode> _nodes = {};
+  final Set<Param> _didCallOnDispose = {};
 
   Capsule<Return> _get(Param param) {
     return _capsules.putIfAbsent(param, () {
@@ -88,8 +89,9 @@ final class DynamicOrchestrator<Param, Return> {
         final node = api as DataflowGraphNode;
 
         handle.callonce(() {
+          _didCallOnDispose.remove(param);
           _nodes[param] = node;
-          api.registerDispose(() => _evictParam(param));
+          api.registerDispose(() => _finalizeDisposed(param));
         });
 
         void disposeSelf() {
@@ -117,9 +119,15 @@ final class DynamicOrchestrator<Param, Return> {
       if (!didDispose) return false;
     }
 
-    _evictParam(param);
-    _onDispose?.call(param);
+    _finalizeDisposed(param);
     return true;
+  }
+
+  void _finalizeDisposed(Param param) {
+    _evictParam(param);
+    if (_didCallOnDispose.contains(param)) return;
+    _didCallOnDispose.add(param);
+    _onDispose?.call(param);
   }
 
   void _evictParam(Param param) {
