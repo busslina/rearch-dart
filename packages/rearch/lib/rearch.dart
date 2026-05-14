@@ -99,12 +99,6 @@ abstract interface class SideEffectApi {
   /// from being called on capsule disposal.
   void unregisterDispose(SideEffectApiCallback callback);
 
-  /// Executes the supplied [sideEffectTransaction],
-  /// which simply updates the state of some side effects
-  /// within a singular rebuild call,
-  /// rebuilding all appropriate capsules at the conclusion of the transaction.
-  void runTransaction(void Function() sideEffectTransaction);
-
   /// Returns a callback that attempts to dispose the current capsule
   /// only if it has no dependents.
   ///
@@ -113,6 +107,9 @@ abstract interface class SideEffectApi {
   /// The callback returns true when disposal succeeds, and false when disposal
   /// is blocked because at least one dependent is still attached.
   bool Function() disposer();
+
+  /// The [CapsuleContainer] associated with this side effect API.
+  CapsuleContainer get container;
 }
 
 /// Contains the data of [Capsule]s.
