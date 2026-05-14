@@ -8,6 +8,7 @@ class _CapsuleManager extends DataflowGraphNode
     buildSelf();
   }
 
+  @override
   final CapsuleContainer container;
   final _UntypedCapsule capsule;
 
@@ -103,10 +104,6 @@ class _CapsuleManager extends DataflowGraphNode
   @override
   void unregisterDispose(SideEffectApiCallback callback) =>
       toDispose.remove(callback);
-
-  @override
-  void runTransaction(void Function() sideEffectTransaction) =>
-      container.runTransaction(sideEffectTransaction);
 }
 
 class _CapsuleHandleImpl implements CapsuleHandle {

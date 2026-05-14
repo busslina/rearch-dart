@@ -21,9 +21,13 @@ extension BuiltinSideEffects on SideEffectRegistrar {
   rebuilder() => use.api().rebuild;
 
   /// Convenience side effect that gives a copy of
-  /// [SideEffectApi.runTransaction].
-  void Function(void Function()) transactionRunner() =>
-      use.api().runTransaction;
+  /// [CapsuleContainer.runTransaction].
+  void Function(void Function()) transactionRunner() {
+    final api = use.api();
+    final container = use.callonce(() => api.container);
+
+    return container.runTransaction;
+  }
 
   /// Side effect that calls the supplied [callback] once, on the first build.
   T callonce<T>(T Function() callback) => use.register((_) => callback());
