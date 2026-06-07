@@ -1,3 +1,8 @@
+## 1.7.3
+
+ - **FIX**: cache CapsuleContainer in RearchElement ([#337](https://github.com/GregoryConrad/rearch-dart/issues/337)).
+ - **DOCS**: improve structure of Flutter example application ([#328](https://github.com/GregoryConrad/rearch-dart/issues/328)).
+
 ## 1.7.2
 
  - **FIX**: ensure widget is mounted before marking dirty ([#305](https://github.com/GregoryConrad/rearch-dart/issues/305)).
