@@ -222,9 +222,7 @@ class _WidgetHandleImpl implements WidgetHandle {
   }
 
   @override
-  bool get isBuilding =>
-      // ignore: only_throw_errors
-      throw 'Bad usage: isBuilding must not be called from a WidgetHandle!';
+  bool get isBuilding => container.isBuilding;
 
   @override
   bool get isInsideTransaction => container.isInsideTransaction;

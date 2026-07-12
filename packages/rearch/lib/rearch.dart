@@ -132,6 +132,8 @@ class CapsuleContainer implements Disposable {
   /// i.e., whether the rebuild was called within its own capsule's build.
   _CapsuleManager? _currBuildingManager;
 
+  bool get isBuilding => _currBuildingManager != null;
+
   /// Runs [sideEffectTransaction] inside a container transaction.
   ///
   /// Nested transactions are supported. Rebuild requests are accumulated during
@@ -176,10 +178,7 @@ class CapsuleContainer implements Disposable {
   }
 
   _CapsuleManager _managerOf(_UntypedCapsule capsule) {
-    return _capsules.putIfAbsent(
-      capsule,
-      () => _CapsuleManager(this, capsule),
-    );
+    return _capsules.putIfAbsent(capsule, () => _CapsuleManager(this, capsule));
   }
 
   /// Reads the current data of the supplied [Capsule],

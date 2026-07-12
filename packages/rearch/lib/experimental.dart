@@ -71,12 +71,7 @@ extension ExperimentalSideEffects on SideEffectRegistrar {
 final class DynamicOrchestrator<Param, Return> {
   DynamicOrchestrator._(this._dyn, {void Function(Param)? onDispose})
     : _onDispose = onDispose;
-  final Return Function(
-    CapsuleHandle,
-    Param,
-    void Function() disposeSelf,
-  )
-  _dyn;
+  final Return Function(CapsuleHandle, Param, void Function() disposeSelf) _dyn;
   final void Function(Param)? _onDispose;
   final Map<Param, Capsule<Return>> _capsules = {};
   final Map<Param, DataflowGraphNode> _nodes = {};
@@ -207,12 +202,7 @@ extension DynamicCapsuleCreationConvenience on CapsuleCreationConvenience {
   /// NOTE: I'd recommend specifying the return type under all situations
   /// regardless, as it'll increase code reability.
   DynamicCapsule<Param, Return> dynamic<Param, Return>(
-    Return Function(
-      CapsuleHandle,
-      Param,
-      void Function() disposeSelf,
-    )
-    dyn,
+    Return Function(CapsuleHandle, Param, void Function() disposeSelf) dyn,
     void Function(Param) onDispose,
   ) {
     return (CapsuleHandle use) => use.dynamic(dyn, onDispose);
