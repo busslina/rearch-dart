@@ -3,6 +3,28 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 2026-06-07
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`flutter_rearch` - `v1.7.3`](#flutter_rearch---v173)
+
+---
+
+#### `flutter_rearch` - `v1.7.3`
+
+ - **FIX**: cache CapsuleContainer in RearchElement ([#337](https://github.com/GregoryConrad/rearch-dart/issues/337)).
+ - **DOCS**: improve structure of Flutter example application ([#328](https://github.com/GregoryConrad/rearch-dart/issues/328)).
+
+
 ## 2025-06-30
 
 ### Changes

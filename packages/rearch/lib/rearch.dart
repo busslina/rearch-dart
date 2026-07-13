@@ -10,6 +10,7 @@ export 'src/types.dart';
 
 part 'src/impl.dart';
 part 'src/capsule_warm_up.dart';
+part 'src/ephemeral_capsule.dart';
 
 /// Represents a disposable object.
 // ignore: one_member_abstracts
@@ -27,9 +28,12 @@ typedef Capsule<T> = T Function(CapsuleHandle);
 /// See [CapsuleContainer.listen].
 typedef CapsuleListener = void Function(CapsuleHandle);
 
+/// Provides shared state for ReArch readers and registrars.
 abstract interface class RearchManagerI {
+  /// Whether the associated manager is currently building.
   bool get isBuilding;
 
+  /// Whether the associated container is currently inside a transaction.
   bool get isInsideTransaction;
 }
 
@@ -67,6 +71,7 @@ abstract interface class SideEffectRegistrar implements RearchManagerI {
   T register<T>(SideEffect<T> sideEffect);
 }
 
+/// A handle that can read capsules and register side effects.
 abstract interface class RearchHandle
     implements CapsuleReader, SideEffectRegistrar {}
 
@@ -116,6 +121,7 @@ abstract interface class SideEffectApi {
 /// See the documentation for more.
 class CapsuleContainer implements Disposable {
   final _capsules = <_UntypedCapsule, _CapsuleManager>{};
+  final _ephemeralManagers = <DataflowGraphNode>{};
   final _orphanedNodesToTryDispose = <DataflowGraphNode>{};
 
   /// Non-null indicates we are currently in a transaction, with managers that
@@ -125,13 +131,18 @@ class CapsuleContainer implements Disposable {
   ///
   /// Managers are collected across nested transactions and flushed once at the
   /// root transaction boundary.
-  List<_CapsuleManager>? _pendingRebuildManagers;
+  List<_BuildManager>? _pendingRebuildManagers;
+
+  final _changedNodesToNotify = <DataflowGraphNode>{};
+
+  int _buildDepth = 0;
 
   /// The currently building [_CapsuleManager].
   /// Needed so we can check whether a rebuild called within a build is valid;
   /// i.e., whether the rebuild was called within its own capsule's build.
-  _CapsuleManager? _currBuildingManager;
+  _BuildManager? _currBuildingManager;
 
+  /// Whether any capsule is currently building in this container.
   bool get isBuilding => _currBuildingManager != null;
 
   /// Runs [sideEffectTransaction] inside a container transaction.
@@ -154,6 +165,7 @@ class CapsuleContainer implements Disposable {
         _disposeQueuedOrphans();
       } finally {
         _pendingRebuildManagers = null;
+        _flushChangedNodeNotifications();
       }
     }
   }
@@ -174,6 +186,25 @@ class CapsuleContainer implements Disposable {
           node.disposeIfNoDependents();
         }
       }
+    }
+  }
+
+  void _notifyNodeChanged(DataflowGraphNode node) {
+    if (_buildDepth > 0 || _pendingRebuildManagers != null) {
+      _changedNodesToNotify.add(node);
+      return;
+    }
+
+    DataflowGraphNode.notifyNodesChanged({node});
+  }
+
+  void _flushChangedNodeNotifications() {
+    if (_buildDepth > 0 || _pendingRebuildManagers != null) return;
+
+    while (_changedNodesToNotify.isNotEmpty) {
+      final changedNodes = {..._changedNodesToNotify};
+      _changedNodesToNotify.clear();
+      DataflowGraphNode.notifyNodesChanged(changedNodes);
     }
   }
 
@@ -253,6 +284,10 @@ class CapsuleContainer implements Disposable {
 
   @override
   void dispose() {
+    for (final manager in _ephemeralManagers.toList()) {
+      manager.dispose();
+    }
+
     // We need toList() to copy the list in order to
     // prevent container modification during iteration
     // (dispose() removes the manager from the container).
@@ -261,6 +296,7 @@ class CapsuleContainer implements Disposable {
     }
   }
 
+  /// Whether this container is currently inside a transaction.
   bool get isInsideTransaction => _pendingRebuildManagers != null;
 }
 
