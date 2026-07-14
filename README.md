@@ -21,6 +21,10 @@ ReArch = re-imagined approach to application design and architecture
 
 
 ## Busslina Fork
+<p align="center">
+  <img src="https://static.busslina.com/share/busslina-logo-v2-gold-thick.png" width="220" alt="Busslina logo" />
+</p>
+
 This repository contains the Busslina fork of ReArch. Busslina-specific code
 lives on the `busslina` branch; use that branch if you want the features
 described in this section.
