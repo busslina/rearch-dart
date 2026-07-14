@@ -21,7 +21,7 @@ typedef EphemeralBuilder<Param, Return> =
 typedef EphemeralCapsule<Param, Return> =
     Capsule<EphemeralOrchestrator<Param, Return>>;
 
-/// A launch predicate for [EphemeralCapsuleReader.readEphemeral].
+/// A launch predicate for [EphemeralCapsuleReader.launchEphemeral].
 typedef EphemeralLaunchPredicate = bool Function(int life);
 
 /// Provides ephemeral capsule orchestration as a side effect.
@@ -29,8 +29,8 @@ extension EphemeralSideEffects on SideEffectRegistrar {
   /// Allows you to construct parameterized ephemeral capsules.
   ///
   /// Ephemeral capsules are launched explicitly via
-  /// [EphemeralCapsuleReader.readEphemeral]. Reading their state never launches
-  /// them unless the supplied launch predicate returns true.
+  /// [EphemeralCapsuleReader.launchEphemeral]. Reading their state never
+  /// launches them.
   EphemeralOrchestrator<Param, Return> ephemeral<Param, Return>(
     EphemeralBuilder<Param, Return> builder,
   ) {
@@ -61,15 +61,24 @@ extension EphemeralCapsuleCreationConvenience on CapsuleCreationConvenience {
 /// Allows you to read and optionally launch ephemeral capsules.
 extension EphemeralCapsuleReader on CapsuleReader {
   /// Reads the current ephemeral state for [param].
-  ///
-  /// If the state is inactive, [launch] is called with the next launch
-  /// generation for [param]. Returning true launches the ephemeral instance;
-  /// returning false leaves it inactive.
   Ephemeral<Return> readEphemeral<Param, Return>(
     EphemeralCapsule<Param, Return> capsule,
     Param param,
-    EphemeralLaunchPredicate launch,
   ) {
-    return call(capsule).read(param, launch);
+    return call(capsule).read(param);
+  }
+
+  /// Reads the current ephemeral state for [param], launching it when allowed.
+  ///
+  /// If the state is inactive, [launch] is called with the next launch
+  /// generation for [param]. Returning true launches the ephemeral instance;
+  /// returning false leaves it inactive. When [launch] is omitted, inactive
+  /// instances are always launched.
+  Ephemeral<Return> launchEphemeral<Param, Return>(
+    EphemeralCapsule<Param, Return> capsule,
+    Param param, [
+    EphemeralLaunchPredicate? launch,
+  ]) {
+    return call(capsule).launch(param, launch);
   }
 }

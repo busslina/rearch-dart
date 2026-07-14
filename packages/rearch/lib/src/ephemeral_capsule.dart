@@ -100,19 +100,25 @@ final class EphemeralOrchestrator<Param, Return> {
   final _CapsuleManager _owner;
   final _entries = <Param, _EphemeralEntry<Param, Return>>{};
 
-  /// Reads the current state for [param], optionally launching it.
+  /// Reads the current state for [param] without launching it.
+  Ephemeral<Return> read(Param param) {
+    final entry = _entryOf(param);
+    return entry.state;
+  }
+
+  /// Reads the current state for [param], launching it when allowed.
   ///
   /// [launch] receives the next launch generation for [param], starting at
   /// zero. Returning true launches the ephemeral instance when it is inactive;
-  /// returning false keeps it inactive.
-  Ephemeral<Return> read(Param param, bool Function(int life) launch) {
-    return _read(param, launch);
-  }
-
-  Ephemeral<Return> _read(Param param, bool Function(int life) launch) {
+  /// returning false keeps it inactive. When [launch] is omitted, inactive
+  /// instances are always launched.
+  Ephemeral<Return> launch(
+    Param param, [
+    bool Function(int life)? launch,
+  ]) {
     final entry = _entryOf(param);
     if (entry.manager != null) return entry.state;
-    if (!launch(entry.lives)) return entry.state;
+    if (!(launch?.call(entry.lives) ?? true)) return entry.state;
 
     final manager = _EphemeralManager<Param, Return>(this, param, entry.lives);
     entry
