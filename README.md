@@ -20,6 +20,39 @@ ReArch = re-imagined approach to application design and architecture
 ---
 
 
+## Busslina Fork
+This repository contains the Busslina fork of ReArch. Busslina-specific code
+lives on the `busslina` branch; use that branch if you want the features
+described in this section.
+
+This fork is based on the original ReArch project by Gregory Conrad, but
+includes experimental changes that are not part of upstream `main`.
+
+Major differences from upstream `main` include:
+- Experimental ephemeral capsules in `package:rearch/experimental.busslina.dart`,
+  including explicit `readEphemeral` and `launchEphemeral` APIs, observable
+  `EphemeralActive` / `EphemeralInactive` state, lifecycle generations, and
+  disposable ephemeral handles.
+- Updated capsule disposal internals, including cleanup of dependencies,
+  side-effect dispose callbacks, and orphaned idempotent nodes.
+- Extended dynamic capsule disposal semantics, including manual disposal
+  support, blocked-disposal errors when dependents still exist, and `onDispose`
+  callbacks.
+- Transactions batch notifications and dependent rebuilds, not the underlying
+  data writes. State updates such as `use.data(...).value = x` are applied
+  immediately, while dependent capsules are rebuilt when the root transaction
+  flushes.
+- `SideEffectApi.rebuild()` is now argumentless and no longer supports rebuild
+  cancellation callbacks. Side effects update their local data directly, then
+  request notification through the container transaction pipeline.
+- `lazyData` updates its local value immediately before dependent rebuilds are
+  flushed through the transaction pipeline.
+- Shared ReArch manager/handle interfaces expose build and transaction state
+  through `isBuilding` and `isInsideTransaction`.
+- Flutter integration has been adjusted to match the new handle and side-effect
+  API shape.
+
+
 ## Features
 Specifically, ReArch is a novel solution to:
 - ⚡️ State Management
